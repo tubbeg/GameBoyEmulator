@@ -36,18 +36,28 @@ let res2 = ADD (Register A, (Pointer (Vregister HL)))
 let InstructionOpCodeMap : Map<byte,Instruction> =
     Map.empty
     |> Map.add 0x00uy NOP 
+    //ADD
     |> Map.add 0x80uy (ADD (Register A,Register B))
     |> Map.add 0x81uy (ADD (Register A,Register C))
     |> Map.add 0x82uy (ADD (Register A,Register D))
     |> Map.add 0x83uy (ADD (Register A,Register E))
     |> Map.add 0x84uy (ADD (Register A,Register H))
     |> Map.add 0x85uy (ADD (Register A,Register L))
-    |> Map.add 0x86uy (ADD (Register A,Register C))
-    |> Map.add 0x87uy (ADD (Register A, (Pointer (Vregister HL))))
+    |> Map.add 0x86uy (ADD (Register A, (Pointer (Vregister HL))))
+    |> Map.add 0x87uy (ADD (Register A,Register A))
     |> Map.add 0xC6uy (ADD (Register A, Number N8))
     |> Map.add 0x09uy (ADD (Vregister HL, Vregister BC))
     |> Map.add 0x19uy (ADD (Vregister HL, Vregister DE))
     |> Map.add 0x29uy (ADD (Vregister HL, Vregister HL))
     |> Map.add 0x39uy (ADD (Vregister HL, Register SP))
     |> Map.add 0xE8uy (ADD (Register SP, Number E8))
-
+    // SUB
+    |> Map.add 0x90uy (SUB (Register A,Register B))
+    |> Map.add 0x91uy (SUB (Register A,Register C))
+    |> Map.add 0x92uy (SUB (Register A,Register D))
+    |> Map.add 0x93uy (SUB (Register A,Register E))
+    |> Map.add 0x94uy (SUB (Register A,Register H))
+    |> Map.add 0x95uy (SUB (Register A,Register L))
+    |> Map.add 0x96uy (SUB (Register A,(Pointer (Vregister HL))))
+    |> Map.add 0x97uy (SUB (Register A,Register A))
+    |> Map.add 0xD6uy (SUB (Register A,Number N8))

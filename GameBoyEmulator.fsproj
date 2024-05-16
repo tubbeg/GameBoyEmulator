@@ -10,7 +10,10 @@
     <Compile Include="Registers.fs"/>
     <Compile Include="MemoryBus.fs"/>
     <Compile Include="Instructions.fs"/>
+    <Compile Include="Flags.fs"/>
     <Compile Include="Processor.fs"/>
+    <Compile Include="Add.fs"/>
+    <Compile Include="Sub.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 
