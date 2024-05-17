@@ -71,3 +71,14 @@ let InstructionOpCodeMap : Map<byte,Instruction> =
     |> Map.add 0x9Euy (SBC (Register A,(Pointer (Vregister HL))))
     |> Map.add 0x9Fuy (SBC (Register A,Register A))
     |> Map.add 0xDEuy (SBC (Register A,Number N8))
+    //ADC
+    |> Map.add 0x88uy (ADC (Register A,Register B))
+    |> Map.add 0x89uy (ADC (Register A,Register C))
+    |> Map.add 0x8Auy (ADC (Register A,Register D))
+    |> Map.add 0x8Buy (ADC (Register A,Register E))
+    |> Map.add 0x8Cuy (ADC (Register A,Register H))
+    |> Map.add 0x8Duy (ADC (Register A,Register L))
+    |> Map.add 0x8Euy (ADC (Register A,(Pointer (Vregister HL))))
+    |> Map.add 0x8Fuy (ADC (Register A,Register A))
+    |> Map.add 0xCEuy (ADC (Register A,Number N8))
+

@@ -7,6 +7,7 @@ open Fable.Core
 open Sub
 open Add
 open SubC
+open AddC
 
 let div = document.createElement "div"
 div.innerHTML <- "Hello world!"
@@ -19,6 +20,7 @@ let readFirstByte (mem : MemoryBus) registers : byte option =
     | Some adress ->
         readByte mem adress 
     | _ -> None
+
 
 let mapByteToInstruction byte =
     match byte with
@@ -35,6 +37,7 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
         | ADD (a,b) -> filterAdd (a,b) memory registers 
         | SUB (a, b) -> filterSub (a,b) registers memory
         | SBC (a, b) -> filterSubC (a,b ) registers memory
+        | ADC (a, b) -> filterAddC (a,b ) registers memory
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
@@ -119,6 +122,29 @@ let testSubc() =
     let testSubCHLpointer =
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0x9Euy |> Map.add 1337us 0x02uy
+        let r =
+            registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)  |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    0
+    
+
+
+let testAddc() =
+    let testAddCReg = 
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x88uy
+        let r =
+            registers |> Map.add B (B8 0xFEuy) |> Map.add A (B8 0xFFuy) |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    let addCN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xCEuy |> Map.add 1337us 0x04uy
+        let r =
+            registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x06uy) |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    let testAddCHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x8Euy |> Map.add 1337us 0x02uy
         let r =
             registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)  |> Map.add F (B8 0x10uy)
         MainCPULoop mem r

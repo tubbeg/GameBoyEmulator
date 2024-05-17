@@ -12,8 +12,10 @@
     <Compile Include="Instructions.fs"/>
     <Compile Include="Flags.fs"/>
     <Compile Include="Processor.fs"/>
-    <Compile Include="Add.fs"/>
-    <Compile Include="Sub.fs"/>
+    <Compile Include="Instructions/Add.fs"/>
+    <Compile Include="Instructions/Sub.fs"/>
+    <Compile Include="Instructions/SubC.fs"/>
+    <Compile Include="Instructions/AddC.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 
