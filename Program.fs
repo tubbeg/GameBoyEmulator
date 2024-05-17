@@ -6,6 +6,7 @@ open Processor
 open Fable.Core
 open Sub
 open Add
+open SubC
 
 let div = document.createElement "div"
 div.innerHTML <- "Hello world!"
@@ -32,7 +33,8 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
     | Some(i) -> 
         match i with
         | ADD (a,b) -> filterAdd (a,b) memory registers 
-        | SUB (a, b) -> filterSub (a,b) registers
+        | SUB (a, b) -> filterSub (a,b) registers memory
+        | SBC (a, b) -> filterSubC (a,b ) registers memory
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
@@ -81,11 +83,44 @@ let testAddOperations() =
     0
 
 
-let testSub =
+let testSub() =
     let testSubReg = 
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0x90uy
         let r =
             registers |> Map.add B (B8 0xFFuy) |> Map.add A (B8 0xFFuy)
         MainCPULoop mem r
+    let subN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xD6uy |> Map.add 1337us 0x04uy
+        let r = registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x06uy)
+        MainCPULoop mem r
+    let testSubHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x96uy |> Map.add 1337us 0x02uy
+        let r = registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)
+        MainCPULoop mem r
     0
+    
+
+let testSubc() =
+    let testSubCReg = 
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x98uy
+        let r =
+            registers |> Map.add B (B8 0xFEuy) |> Map.add A (B8 0xFFuy) |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    let subCN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xDEuy |> Map.add 1337us 0x04uy
+        let r =
+            registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x06uy) |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    let testSubCHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x9Euy |> Map.add 1337us 0x02uy
+        let r =
+            registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)  |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    0
+    

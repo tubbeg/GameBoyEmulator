@@ -1,4 +1,4 @@
-module Sub
+module SubC
 open Registers
 open MemoryBus
 open Instructions
@@ -7,14 +7,14 @@ open Flags
 
 
 
-let isCarry7to8 (x : byte) (y : byte) =
-    let res = (x - y) >>> 8
+let isCarry7to8 (x : byte) (y : byte) cb =
+    let res =( (x - y) - cb) >>> 8
     res > 0uy
 
-let isHalfCarry3to4 (x :byte) (y:byte) =
+let isHalfCarry3to4 (x :byte) (y:byte) cb =
     let maskedX =  x&&&0x0Fuy
     let maskedY =  y&&&0x0Fuy
-    ((maskedX - maskedY) >>> 4) > 0uy
+    (((maskedX - maskedY) - cb) >>> 4) > 0uy
 
 let isZero (n : uint) =
     n = 0u
@@ -26,18 +26,19 @@ let setMin (n : byte) carry : byte =
     | false,true -> n
 
 
-let subHLpointer   (regs : RegisterMap) (mem : MemoryBus)  =
+let subCHLpointer   (regs : RegisterMap) (mem : MemoryBus)  =
     let a = regs |> Map.tryFind A
     let hl : uint16 option = regsToVirtual H L regs
+    let cb = regs |> Map.tryFind F |> getCarryBit
     printf "Found hl data %A" hl
     match hl with
     | Some adress ->
         let data = mem |> Map.tryFind adress
         match data,a with
         | Some(dataHL), Some(B8 b) ->
-            let res = b - dataHL
-            let carry = isCarry7to8 b dataHL
-            let half = isHalfCarry3to4 b dataHL
+            let res = (b - dataHL) - cb
+            let carry = isCarry7to8 b dataHL cb
+            let half = isHalfCarry3to4 b dataHL cb
             let z = isZero (uint res)
             let f = {Zero=z;Sub=true;HalfCarry=half;Carry=carry}
             let ur = regs |> Map.add A (B8 (setMin res carry))
@@ -48,13 +49,14 @@ let subHLpointer   (regs : RegisterMap) (mem : MemoryBus)  =
     | _ -> None
 
 
-let sub8bitRegisters  a b (regs : RegisterMap) :( RegisterMap * Flags) option  =
+let subC8bitRegisters  a b (regs : RegisterMap) :( RegisterMap * Flags) option  =
     let data1 = regs |> Map.tryFind a
     let data2 = regs |> Map.tryFind b
+    let cb = regs |> Map.tryFind F |> getCarryBit
     match data1,data2 with
     | Some(B8 x),Some(B8 y) -> 
-        let res = x - y
-        let carry, half = isCarry7to8 x y, isHalfCarry3to4 x y
+        let res = (x - y) - cb
+        let carry, half = isCarry7to8 x y cb, isHalfCarry3to4 x y cb
         let z = isZero (uint res)
         let resMin = setMin res carry
         let f = {Zero=z;Sub=true;HalfCarry=half;Carry=carry}
@@ -64,17 +66,18 @@ let sub8bitRegisters  a b (regs : RegisterMap) :( RegisterMap * Flags) option  =
         printfn "No 8 bit values detected!"
         None
 
-let subFromMem (regs : RegisterMap) (memory : MemoryBus) =
+let subCFromMemory (regs : RegisterMap) (memory : MemoryBus) =
     let a = regs |> Map.tryFind A
     let pc = regs |> Map.tryFind PC
+    let cb = regs |> Map.tryFind F |> getCarryBit
     match pc with
     | Some (B16 adress) ->
         let n8 = memory |> Map.tryFind (adress + 1us)
         match n8,a with
         | Some n, Some (B8 i) ->
-            let res = i - n
-            let carry = isCarry7to8 i n
-            let half = isHalfCarry3to4 i n
+            let res = (i - n) - cb
+            let carry = isCarry7to8 i n cb
+            let half = isHalfCarry3to4 i n cb
             let z = isZero (uint res)
             let f = {Zero=z;Sub=false;HalfCarry=half;Carry=carry}
             let updatedRegs =
@@ -88,9 +91,9 @@ let subFromMem (regs : RegisterMap) (memory : MemoryBus) =
         printf "Invalid adress"
         None
 
-let filterSub (r1,(r2 : Resource)) reg mem =
+let filterSubC (r1,(r2 : Resource)) reg mem =
     match r2 with
-    | Pointer(Vregister HL) -> subHLpointer reg mem
-    | Number N8 -> subFromMem reg mem
-    | Register n -> sub8bitRegisters A n reg
+    | Pointer(Vregister HL) -> subCHLpointer reg mem
+    | Number N8 -> subCFromMemory reg mem
+    | Register n -> subC8bitRegisters A n reg
     | _ -> None
