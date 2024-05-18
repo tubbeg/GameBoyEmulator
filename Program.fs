@@ -6,8 +6,10 @@ open Processor
 open Fable.Core
 open Sub
 open Add
+open And
 open SubC
 open AddC
+open And
 
 let div = document.createElement "div"
 div.innerHTML <- "Hello world!"
@@ -38,6 +40,7 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
         | SUB (a, b) -> filterSub (a,b) registers memory
         | SBC (a, b) -> filterSubC (a,b ) registers memory
         | ADC (a, b) -> filterAddC (a,b ) registers memory
+        | AND (a, b) -> filterAnd (a,b ) registers memory
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
@@ -147,6 +150,27 @@ let testAddc() =
         let mem : MemoryBus = Map.empty |> Map.add addr 0x8Euy |> Map.add 1337us 0x02uy
         let r =
             registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)  |> Map.add F (B8 0x10uy)
+        MainCPULoop mem r
+    0
+
+let testAnd =
+    let testAndReg = 
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xA0uy
+        let r =
+            registers |> Map.add B (B8 0x0Fuy) |> Map.add A (B8 0xFFuy)
+        MainCPULoop mem r
+    let andN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xE6uy |> Map.add 1337us 0x00uy
+        let r =
+            registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x0Fuy)
+        MainCPULoop mem r
+    let testAndHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xA6uy |> Map.add 1337us 0x02uy
+        let r =
+            registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)
         MainCPULoop mem r
     0
     

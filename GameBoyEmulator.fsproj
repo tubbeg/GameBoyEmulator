@@ -16,6 +16,7 @@
     <Compile Include="Instructions/Sub.fs"/>
     <Compile Include="Instructions/SubC.fs"/>
     <Compile Include="Instructions/AddC.fs"/>
+    <Compile Include="Instructions/And.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 

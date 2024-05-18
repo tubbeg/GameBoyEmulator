@@ -22,6 +22,11 @@ type Resource =
 type Instruction =
     | ADD of Resource * Resource
     | SUB  of Resource * Resource
+    | AND of Resource * Resource
+    | OR of Resource * Resource
+    | XOR of Resource * Resource
+    | INC of Resource
+    | DEC of Resource
     | ADC of Resource * Resource
     | SBC of Resource * Resource
     | LD of Resource * Resource
@@ -81,4 +86,14 @@ let InstructionOpCodeMap : Map<byte,Instruction> =
     |> Map.add 0x8Euy (ADC (Register A,(Pointer (Vregister HL))))
     |> Map.add 0x8Fuy (ADC (Register A,Register A))
     |> Map.add 0xCEuy (ADC (Register A,Number N8))
+    //AND
+    |> Map.add 0xA0uy (AND (Register A,Register B))
+    |> Map.add 0xA1uy (AND (Register A,Register C))
+    |> Map.add 0xA2uy (AND (Register A,Register D))
+    |> Map.add 0xA3uy (AND (Register A,Register E))
+    |> Map.add 0xA4uy (AND (Register A,Register H))
+    |> Map.add 0xA5uy (AND (Register A,Register L))
+    |> Map.add 0xA6uy (AND (Register A,(Pointer (Vregister HL))))
+    |> Map.add 0xA7uy (AND (Register A,Register A))
+    |> Map.add 0xE6uy (AND (Register A,Number N8))
 
