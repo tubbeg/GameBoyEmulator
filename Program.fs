@@ -43,6 +43,7 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
         | ADC (a, b) -> filterAddC (a,b ) registers memory
         | AND (a, b) -> filterAnd (a,b ) registers memory
         | OR (a, b) -> filterOrXor (a,b ) registers memory i
+        | XOR (a, b) -> filterOrXor (a,b ) registers memory i
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
@@ -178,7 +179,7 @@ let testAnd() =
 
 
     
-let testOr =
+let testOr() =
     let testOrReg = 
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0xB0uy
@@ -196,6 +197,28 @@ let testOr =
         let mem : MemoryBus = Map.empty |> Map.add addr 0xB6uy |> Map.add 1337us 0x03uy
         let r =
             registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x0Cuy)
+        MainCPULoop mem r
+    0
+
+
+let testXORr =
+    let testOrReg = 
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xA8uy
+        let r =
+            registers |> Map.add B (B8 0xFFuy) |> Map.add A (B8 0xF0uy)
+        MainCPULoop mem r
+    let OrN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xEEuy |> Map.add 1337us 0xFFuy
+        let r =
+            registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0xFFuy)
+        MainCPULoop mem r
+    let testOrHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xAEuy |> Map.add 1337us 0xFFuy
+        let r =
+            registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x00uy)
         MainCPULoop mem r
     0
 
