@@ -29,6 +29,7 @@ type Instruction =
     | DEC of Resource
     | ADC of Resource * Resource
     | SBC of Resource * Resource
+    | CP of Resource * Resource
     | LD of Resource * Resource
     | NOP
 
@@ -116,4 +117,14 @@ let InstructionOpCodeMap : Map<byte,Instruction> =
     |> Map.add 0xAEuy (XOR (Register A,(Pointer (Vregister HL))))
     |> Map.add 0xAFuy (XOR (Register A,Register A))
     |> Map.add 0xEEuy (XOR (Register A,Number N8))
+    //CP
+    |> Map.add 0xB8uy (CP (Register A,Register B))
+    |> Map.add 0xB9uy (CP (Register A,Register C))
+    |> Map.add 0xBAuy (CP (Register A,Register D))
+    |> Map.add 0xBBuy (CP (Register A,Register E))
+    |> Map.add 0xBCuy (CP (Register A,Register H))
+    |> Map.add 0xBDuy (CP (Register A,Register L))
+    |> Map.add 0xBEuy (CP (Register A,(Pointer (Vregister HL))))
+    |> Map.add 0xBFuy (CP (Register A,Register A))
+    |> Map.add 0xFEuy (CP (Register A,Number N8))
 

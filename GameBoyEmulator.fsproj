@@ -18,6 +18,7 @@
     <Compile Include="Instructions/AddC.fs"/>
     <Compile Include="Instructions/And.fs"/>
     <Compile Include="Instructions/Or.fs"/>
+    <Compile Include="Instructions/Compare.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 

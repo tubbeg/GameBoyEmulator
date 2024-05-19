@@ -10,6 +10,7 @@ open And
 open SubC
 open AddC
 open Or
+open Compare
 open And
 
 let div = document.createElement "div"
@@ -44,6 +45,7 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
         | AND (a, b) -> filterAnd (a,b ) registers memory
         | OR (a, b) -> filterOrXor (a,b ) registers memory i
         | XOR (a, b) -> filterOrXor (a,b ) registers memory i
+        | CP (a, b) -> filterCompare (a,b) registers memory
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
@@ -201,7 +203,7 @@ let testOr() =
     0
 
 
-let testXORr =
+let testXORr() =
     let testOrReg = 
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0xA8uy
@@ -221,6 +223,29 @@ let testXORr =
             registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x00uy)
         MainCPULoop mem r
     0
+
+
+let testCP =
+    let testOrReg = 
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xB8uy
+        let r =
+            registers |> Map.add B (B8 0xFFuy) |> Map.add A (B8 0xF0uy)
+        MainCPULoop mem r
+    let OrN8 =
+        let addr = 1336us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xFEuy |> Map.add 1337us 0x9Fuy
+        let r =
+            registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x2Fuy)
+        MainCPULoop mem r
+    let testOrHLpointer =
+        let addr = 0us
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xBEuy |> Map.add 1337us 0x01uy
+        let r =
+            registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x01uy)
+        MainCPULoop mem r
+    0
+
 
 
     
