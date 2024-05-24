@@ -31,6 +31,7 @@ type Instruction =
     | SBC of Resource * Resource
     | CP of Resource * Resource
     | LD of Resource * Resource
+    | PREFIX of Instruction
     | NOP
 
 let instr : Instruction = (ADD (Register A,Register B))

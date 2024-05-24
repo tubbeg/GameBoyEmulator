@@ -12,6 +12,7 @@
     <Compile Include="Instructions.fs"/>
     <Compile Include="Flags.fs"/>
     <Compile Include="Processor.fs"/>
+    <Compile Include="Fetch.fs"/>
     <Compile Include="Instructions/Add.fs"/>
     <Compile Include="Instructions/Sub.fs"/>
     <Compile Include="Instructions/SubC.fs"/>
@@ -19,6 +20,9 @@
     <Compile Include="Instructions/And.fs"/>
     <Compile Include="Instructions/Or.fs"/>
     <Compile Include="Instructions/Compare.fs"/>
+    <Compile Include="Instructions/Load.fs"/>
+    <Compile Include="Instructions/Inc.fs"/>
+    <Compile Include="Instructions/Update.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -12,7 +12,7 @@ let setMinMax (n : byte)  =
     | false, true -> 255uy
     | _ -> n
 
-let orHLpointer   (regs : RegisterMap) (mem : MemoryBus) r1  =
+let orHLpointer   (regs : RegisterMap) (mem : MemoryBus) instr  =
     let a = regs |> Map.tryFind A
     let hl : uint16 option = regsToVirtual H L regs
     printf "Found hl data %A" hl
@@ -37,7 +37,7 @@ let orHLpointer   (regs : RegisterMap) (mem : MemoryBus) r1  =
     | _ -> None
 
 
-let or8bitRegisters  a b (regs : RegisterMap) r1 :( RegisterMap * Flags) option  =
+let or8bitRegisters  a b (regs : RegisterMap) instr :( RegisterMap * Flags) option  =
     let data1 = regs |> Map.tryFind a
     let data2 = regs |> Map.tryFind b
     match data1,data2 with

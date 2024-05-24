@@ -38,29 +38,26 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
     match instruction with
     | Some(i) -> 
         match i with
-        | ADD (a,b) -> filterAdd (a,b) memory registers 
-        | SUB (a, b) -> filterSub (a,b) registers memory
-        | SBC (a, b) -> filterSubC (a,b ) registers memory
+        | SUB (a, b) -> filterSub (a,b) (Some registers) memory
+       (* | SBC (a, b) -> filterSubC (a,b ) registers memory
         | ADC (a, b) -> filterAddC (a,b ) registers memory
         | AND (a, b) -> filterAnd (a,b ) registers memory
         | OR (a, b) -> filterOrXor (a,b ) registers memory i
         | XOR (a, b) -> filterOrXor (a,b ) registers memory i
         | CP (a, b) -> filterCompare (a,b) registers memory
+        | LD (a, b) -> filterCompare (a,b) registers memory
+        | ADD (a,b) -> filterAdd (a,b) memory registers  *)
         | _ ->
             printf "Instruction %A Not Yet Implemented" i
             None
-    | None ->  None
+    | _ -> None
 
 let MainCPULoop (memory : MemoryBus) (registers : RegisterMap) =
     let rec CPULoop (memory : MemoryBus) registers =
         let byte = readFirstByte memory registers
         let instr = mapByteToInstruction byte
         let res = execute instr memory registers
-        match res with
-        | Some (m,f) ->
-            printf "Result is %A %A" m f
-        | None ->
-            printf "Error"
+        printf "Result is %A" res
     CPULoop memory registers
 
 
@@ -94,7 +91,7 @@ let testAddOperations() =
     0
 
 
-let testSub() =
+let testSub =
     let testSubReg = 
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0x90uy
@@ -225,7 +222,7 @@ let testXORr() =
     0
 
 
-let testCP =
+let testCP() =
     let testOrReg = 
         let addr = 0us
         let mem : MemoryBus = Map.empty |> Map.add addr 0xB8uy
