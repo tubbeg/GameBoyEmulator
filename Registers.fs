@@ -2,6 +2,11 @@ module Registers
 
 type BitData =
     B16 of uint16 | B8 of byte
+    
+
+
+
+
 
 type GameBoyRegister =
     | A

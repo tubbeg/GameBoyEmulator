@@ -12,6 +12,7 @@ open AddC
 open Or
 open Compare
 open And
+open Flags
 
 let div = document.createElement "div"
 div.innerHTML <- "Hello world!"
@@ -38,7 +39,7 @@ let execute (instruction : Instruction option) (memory : MemoryBus) (registers :
     match instruction with
     | Some(i) -> 
         match i with
-        | SUB (a, b) -> filterSub (a,b) (Some registers) memory
+        | SUB (a, b) -> sub (a,b) (Some registers) memory
        (* | SBC (a, b) -> filterSubC (a,b ) registers memory
         | ADC (a, b) -> filterAddC (a,b ) registers memory
         | AND (a, b) -> filterAnd (a,b ) registers memory
@@ -58,6 +59,10 @@ let MainCPULoop (memory : MemoryBus) (registers : RegisterMap) =
         let instr = mapByteToInstruction byte
         let res = execute instr memory registers
         printf "Result is %A" res
+        match res with
+        | (Some (rm,_))->
+            printFlags (Some rm)
+        | None -> ()
     CPULoop memory registers
 
 
@@ -100,13 +105,13 @@ let testSub =
         MainCPULoop mem r
     let subN8 =
         let addr = 1336us
-        let mem : MemoryBus = Map.empty |> Map.add addr 0xD6uy |> Map.add 1337us 0x04uy
-        let r = registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x06uy)
+        let mem : MemoryBus = Map.empty |> Map.add addr 0xD6uy |> Map.add 1337us 0x17uy
+        let r = registers |> Map.add PC (B16 1336us) |> Map.add A (B8 0x26uy)
         MainCPULoop mem r
     let testSubHLpointer =
         let addr = 0us
-        let mem : MemoryBus = Map.empty |> Map.add addr 0x96uy |> Map.add 1337us 0x02uy
-        let r = registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x06uy)
+        let mem : MemoryBus = Map.empty |> Map.add addr 0x96uy |> Map.add 1337us 0x80uy
+        let r = registers |> updateVirtualReg 1337us HL  |> Map.add A (B8 0x71uy)
         MainCPULoop mem r
     0
     
