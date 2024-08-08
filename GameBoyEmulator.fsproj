@@ -9,6 +9,9 @@
     <Compile Include="Register.fs" />
     <Compile Include="Memory.fs" />
     <Compile Include="Opcodes.fs" />
+    <Compile Include="ALU.fs" />
+    <Compile Include="Fetch.fs" />
+    <Compile Include="Instruction.fs" />
     <Compile Include="Processor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

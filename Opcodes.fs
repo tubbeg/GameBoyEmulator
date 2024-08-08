@@ -4,12 +4,16 @@ open Register
 type Instruction = 
     | NOP
     | ADD
+    | AND
     | SUB
     | OR
     | XOR
     | ADC
     | SBC
     | LD
+    | INC
+    | DEC
+    | HALT
 
 type Operand = 
     | A
@@ -17,6 +21,10 @@ type Operand =
     | C
     | D
     | E
+    | F
+    | H
+    | L
+    | SP
     | AF
     | BC
     | DE 
@@ -26,10 +34,21 @@ type Operand =
     | N16
     | Pointer of Operand
 
-let parseOpcode (code : Byte) =
+type OperandParse =
+    {
+        instruction:Instruction;
+        operand1:Operand option;
+        operand2:Operand option;
+    }
+
+
+let createOpRecord ins op1 op2 =
+    Some {instruction=ins;operand1=Some op1;operand2=Some op2}
+
+let parseOpcode (code : Byte) : OperandParse option =
     match code.byteValue with
-    | 0 -> Some NOP,None,None
-    | 0x01 -> Some LD, Some BC, Some N16
-    | 0x80 -> Some ADD,Some A,Some B
-    | 0x81 -> Some ADD,Some A,Some C
-    | _ ->  None,None,None
+    | 0 -> Some {instruction=NOP;operand1=None;operand2=None}
+    | 0x01 -> createOpRecord LD BC N16
+    | 0x80 -> createOpRecord ADD A B
+    | 0x81 -> createOpRecord ADD A C
+    | _ ->  None
