@@ -135,8 +135,7 @@ let addSignedByteToSP (sh : Short) (e8 : Sbyte) f =
             | _ -> None
         | _ -> None
 
-
-let addInstruction (parse : OperandParse) (fetch : Fetch) : Registers option  =
+let addInstruction (parse : OperandParse) (fetch : Fetch) =
     match parse.operand1,fetch.operand1,fetch.operand2 with
     | Some A,Some (By h), Some (By l) -> addBytesToAcc h l fetch.registers
     | Some SP,Some (Sh h), Some (Sb d) -> addSignedByteToSP h d fetch
@@ -144,7 +143,7 @@ let addInstruction (parse : OperandParse) (fetch : Fetch) : Registers option  =
         addShortToVR parse h l fetch
     | _ -> None
 
-let subInstruction (fetch : Fetch) : Registers option  =
+let subInstruction (fetch : Fetch) m : Registers option  =
     match fetch.operand1,fetch.operand2 with
     | Some (By h), Some (By l) -> subBytesToAcc h l fetch.registers
     | _ -> None
