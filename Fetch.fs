@@ -15,6 +15,7 @@ let notImplemented () =
 type FetchData =
     | Sh of Short
     | By of Byte
+    | Sb of Sbyte
 
 type Fetch =
     {
@@ -24,21 +25,14 @@ type Fetch =
     }
 
 let statusToByte (f : Status) =
-    let z,s,h,c =
-        boolToBit f.zero, boolToBit f.sub,
-        boolToBit f.half, boolToBit f.carry
-    let zbit = z <<< 3
-    let sbit = s <<< 2
-    let hbit = h <<< 1
-    (zbit ||| sbit ||| hbit ||| c) |> Byte
-
+    f.byteValue
 
 let createVirtualRegister (r1 : Operand) (r2 : Operand) (r : Registers) =
     match r1,r2 with
     | H,L -> bytesToShort r.H r.L |> Short |> Some
     | B,C -> bytesToShort r.B r.C |> Short |> Some
     | D,E -> bytesToShort r.D r.E |> Short |> Some
-    | A,F -> bytesToShort r.A (statusToByte r.F) |> Short |> Some
+    | A,F -> bytesToShort r.A r.F |> Short |> Some
     | _ -> error (r1,r2)
 
 let createVR h l r =
@@ -98,6 +92,12 @@ let fetchMemory m data  =
         | _ -> None
     | _ -> None
 
+let fetchSignedByte registers m =
+    match fetchImmediateByte registers m with
+    | Some (r,By d) ->
+        let sb = Sbyte d.byteValue
+        Some (r, Sb sb)
+    | _ -> None
 
 let rec fetchOperand oper (r : Registers) m : (Registers * FetchData) option =
     match oper with
@@ -113,6 +113,7 @@ let rec fetchOperand oper (r : Registers) m : (Registers * FetchData) option =
     | BC -> createVR B C r
     | DE -> createVR D E r
     | AF -> createVR A F r
+    | E8 -> fetchSignedByte r m
     | N8 -> fetchImmediateByte r m
     | A8 -> fetchAdressByte r m
     | N16 -> fetchImmediateShort r m
@@ -148,9 +149,8 @@ let fetch (opParse : OperandParse) r m =
     let i,o1,o2 =
         opParse.instruction,opParse.operand1,opParse.operand2
     match i,o1,o2 with
-    | NOP,_,_ -> createFetchRec r None None
-    | HALT,_,_ -> createFetchRec r None None
-    | INC,r1,_ ->  fetch1operand r1 r m
-    | DEC,r1,_ ->  fetch1operand r1 r m
-    | ADD,r1,r2 -> fetch2operands r1 r2 r m
-    | _,_,_ -> None
+    | (NOP | HALT),_,_ -> createFetchRec r None None
+    | (INC | DEC ),r1,_ ->  fetch1operand r1 r m
+    | (ADD | SUB | ADC | SBC | XOR | OR | AND | LD | RES),r1,r2 ->
+        fetch2operands r1 r2 r m
+    | _,_,_ -> notImplemented ()

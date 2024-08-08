@@ -9,7 +9,6 @@ let mutable a = 255
 a <- ( a ||| b) //load b into a
 a <- a &&& b //mask unnecessary bits
 
-let x = {zero=true;sub=true;half=true;carry=true;} |> statusToByte
 
 let test1,test2 = 0x0F,0x0F
 let test3 = 0x0F0F

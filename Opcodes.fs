@@ -14,6 +14,12 @@ type Instruction =
     | INC
     | DEC
     | HALT
+    | RES
+    | SET
+    | PUSH
+    | POP
+    | CALL
+
 
 type Operand = 
     | A
@@ -30,9 +36,11 @@ type Operand =
     | DE 
     | HL
     | N8
+    | E8
     | A8
     | N16
     | Pointer of Operand
+    | PC //not actually an operand
 
 type OperandParse =
     {

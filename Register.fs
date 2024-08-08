@@ -1,12 +1,5 @@
 module Register
 
-type Status = 
-    {
-        zero:bool;
-        sub:bool;
-        half:bool;
-        carry:bool
-    }
 
 let bit8mod value =
     match value with
@@ -19,12 +12,18 @@ let bit8mod value =
 
 type Byte (value) =
     class
-        member this.byteValue = bit8mod value
-
+        let v = value
+        member this.byteValue = bit8mod v
         member this.lowNibble = this.byteValue &&& 0x0F
         member this.highNibble = this.byteValue &&& 0xF0
+        member this.getBit n =
+            match n with
+            | 0 -> this.byteValue &&& 0x01 |> Some
+            | 1 -> this.byteValue &&& 0x02 |> Some
+            | 2 -> this.byteValue &&& 0x04 |> Some
+            | 3 -> this.byteValue &&& 0x08 |> Some
+            | _ -> None
     end
-
 
 let shortToBytes (s : int) =
     Byte((s &&& 0xFF00) >>> 8), Byte (s &&& 0x00FF)
@@ -37,7 +36,6 @@ let bytesToShort (h : Byte) (l : Byte) =
 type Short (value) =
     class
         let high,low = shortToBytes value
-        
         member this.shortValue = bytesToShort high low
         member this.lowByte = low
         member this.highByte = high
@@ -56,6 +54,7 @@ let byteToSigned (b : int) =
 
 type Sbyte (value) =
     class
+        //this might not actually work because of modulo operator
         let b = Byte value
         member this.sbyteValue = b.byteValue |> byteToSigned
         member this.lowNibble = this.sbyteValue &&& 0x0F
@@ -70,16 +69,18 @@ type Registers =
         C:Byte
         D:Byte
         E:Byte
-        F:Status
+        F:Byte
         H:Byte
         L:Byte
         SP:Short
         PC:Short
     }
 
-    
+let byteToStatus =
+    0
 
     
+
 
 
 

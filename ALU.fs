@@ -2,6 +2,8 @@ module ALU
 open Register
 open Opcodes
 
+type Status = Byte
+
 type ALUinput =
     {
         a:Byte;
@@ -20,15 +22,15 @@ let error msg =
     eprintfn "Not found: %A" msg
     None
 
-let setCarry i ins =
+let isCarry i ins =
     match ins with
     | AND | XOR | OR -> false
     | _ -> (i > 255) || (i < 0)
 
-let setZero i =
+let isZero i =
     i = 0
 
-let setHalfCarry (a : Byte) (b : Byte) ins =
+let isHalfCarry (a : Byte) (b : Byte) ins =
     match ins with
     | AND -> true
     | XOR | OR -> false
@@ -39,56 +41,61 @@ let setHalfCarry (a : Byte) (b : Byte) ins =
         let result = a.lowNibble + b.lowNibble
         (result > 0x0F) || (result < 0)
 
-let setFlags a b result ins =
-    {
-        zero=setZero result;
-        sub=(ins=SUB || ins=SBC);
-        carry=setCarry result ins;
-        half=setHalfCarry a b ins
-    }
+let isSub ins =
+    ins=SUB || ins=SBC
 
 let boolToBit b =
     match b with
     | true -> 1
     | _ -> 0
 
+let calcStatus a b result ins =
+    let z = (isZero result |> boolToBit) <<< 3
+    let s = (isSub ins |> boolToBit) <<< 2
+    let h = (isHalfCarry a b ins |> boolToBit) <<< 1
+    let c = (isCarry result ins |> boolToBit)
+    (z ||| s ||| h ||| c) |> Byte
+
 (* 
 a -> b -> status -> opcode -> (y,status)
 
 DEC and INC can be implemented as an SUB/ADD
 LD can be implemented as OR followed by AND
+
+CP can be performed as SUB, but don't store
+result in accumulator
 *)
 let alu (input : ALUinput) : ALUoutput option =
     //adc and sbc need the carry bit from status
-    let a,b,ins,c =
-        input.a, input.b,input.i,(boolToBit input.s.carry)
-    match ins with
-    | ADD ->
+    let a,b,ins =
+        input.a, input.b,input.i
+    match ins,(input.s.getBit 0) with
+    | ADD,_ ->
         let result = a.byteValue + b.byteValue
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | ADC ->
+    | ADC,Some c ->
         let result = a.byteValue + b.byteValue + c
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | SUB ->
+    | SUB,_ ->
         let result = a.byteValue - b.byteValue
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | SBC ->
+    | SBC,Some c ->
         let result = a.byteValue - b.byteValue - c
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | OR ->
+    | OR,_ ->
         let result = a.byteValue ||| b.byteValue
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | XOR ->
+    | XOR,_ ->
         let result = a.byteValue ^^^ b.byteValue
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
-    | AND ->
+    | AND,_ ->
         let result = a.byteValue &&& b.byteValue 
-        let flags = setFlags a b result ins
+        let flags = calcStatus a b result ins
         Some {y=Byte result;s=flags}
     | _ -> error ins
