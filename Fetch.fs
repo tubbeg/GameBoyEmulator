@@ -15,7 +15,7 @@ let notImplemented () =
 type FetchData =
     | Sh of Short
     | By of Byte
-    | Sb of Sbyte
+    | Sb of SignedByte
 
 type Fetch =
     {
@@ -24,16 +24,25 @@ type Fetch =
         operand2:FetchData option;
     }
 
-let statusToByte (f : Status) =
-    f.byteValue
+let boolToBit b =
+    match b with
+    | true -> 1
+    | _ -> 0
+
+let statusToByte (f : ProcessorStatus) =
+    let c,h,s,z = f.carry, f.half,f.sub, f.zero
+    let cbit,hbit,sbit,zbit =
+        boolToBit c, (boolToBit h) <<< 1, (boolToBit s) <<< 2, (boolToBit z) <<< 3
+    (zbit ||| sbit ||| hbit ||| cbit) |> intToByte
 
 let createVirtualRegister (r1 : Operand) (r2 : Operand) (r : Registers) =
-    match r1,r2 with
-    | H,L -> bytesToShort r.H r.L |> Short |> Some
-    | B,C -> bytesToShort r.B r.C |> Short |> Some
-    | D,E -> bytesToShort r.D r.E |> Short |> Some
-    | A,F -> bytesToShort r.A r.F |> Short |> Some
-    | _ -> error (r1,r2)
+    let statusByte = statusToByte r.F
+    match r1,r2, statusByte with
+    | H,L,_ -> bytesToShort r.H r.L |> Short |> Some
+    | B,C,_ -> bytesToShort r.B r.C |> Short |> Some
+    | D,E,_ -> bytesToShort r.D r.E |> Short |> Some
+    | A,F,Some s -> bytesToShort r.A s |> Short |> Some
+    | _ -> None
 
 let createVR h l r =
     let vr = createVirtualRegister h l r
@@ -41,45 +50,53 @@ let createVR h l r =
     | None -> None
     | Some s -> Some (r,Sh s)
 
-let incPC (r : Registers) =
-    let pc = (r.PC.shortValue + 1) |> Short
-    {A=r.A;
-    B=r.B;
-    C=r.C;
-    D=r.D;
-    E=r.E;
-    F=r.F;
-    H=r.H;
-    L=r.L;
-    SP=r.SP;
-    PC=pc}
+let incPC (r : Registers) : Registers option  =
+    match ((r.PC |> shortToInt) + 1) |> intToShort with
+    | Some pc ->
+        {A=r.A;
+        B=r.B;
+        C=r.C;
+        D=r.D;
+        E=r.E;
+        F=r.F;
+        H=r.H;
+        L=r.L;
+        SP=r.SP;
+        PC=pc} |> Some
+    | _ -> None
 
 
 let fetchImmediateByte r m  =
-    let registers = incPC r
-    let data = getDataFromMem r.PC m
-    match data with
-    | Some d -> Some (registers,By d)
+    match incPC r with
+    | Some registers ->
+        let data = getDataFromMem (registers.PC) m
+        match data with
+        | Some d -> Some (registers,By d)
+        | _ -> None
     | _ -> None
 
 
 let fetchImmediateShort registers m : (Registers * FetchData) option =
-    let firstInc = incPC registers
-    let lowByte = getDataFromMem firstInc.PC m
-    let secondInc = incPC firstInc 
-    let highByte = getDataFromMem secondInc.PC m
-    match highByte,lowByte with
-    | Some high, Some low ->
-        let s = bytesToShort high low |> Short
-        Some (secondInc, Sh s)
+    match registers |> incPC with
+    | Some r ->
+        match  incPC r  with
+        | Some r2 ->
+            match getDataFromMem r2.PC m,getDataFromMem r.PC m with
+            | Some high, Some low ->
+                let s = bytesToShort high low |> Sh
+                Some (r2, s)
+            | _ -> None
+        | _ -> None
     | _ -> None
 
 let fetchAdressByte registers m =
     let f = fetchImmediateByte registers m
     match f with
     | Some (r,By d) ->
-        let adress = d.byteValue + 0xFF00 |>  Short
-        Some (r,Sh adress)
+        match (d |> byteToInt) + 0xFF00 |>  intToShort with
+        | Some shrt ->
+            Some (r,Sh shrt)
+        | _ -> None
     | _ -> None
     
 
@@ -95,8 +112,9 @@ let fetchMemory m data  =
 let fetchSignedByte registers m =
     match fetchImmediateByte registers m with
     | Some (r,By d) ->
-        let sb = Sbyte d.byteValue
-        Some (r, Sb sb)
+        //all values are stored as bytes
+        //signed only matters during calculation
+        Some (r, Sb d)
     | _ -> None
 
 let rec fetchOperand oper (r : Registers) m : (Registers * FetchData) option =
@@ -113,10 +131,10 @@ let rec fetchOperand oper (r : Registers) m : (Registers * FetchData) option =
     | BC -> createVR B C r
     | DE -> createVR D E r
     | AF -> createVR A F r
-    | E8 -> fetchSignedByte r m
+    | E8 -> fetchSignedByte  r m
     | N8 -> fetchImmediateByte r m
-    | A8 -> fetchAdressByte r m
-    | N16 -> fetchImmediateShort r m
+    | A8 -> fetchAdressByte  r m
+    | N16 -> fetchImmediateShort  r m
     | Pointer (n) ->
         fetchOperand n r m |> fetchMemory m
     | _ -> None

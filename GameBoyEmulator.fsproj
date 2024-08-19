@@ -6,12 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ALU.fs" />
     <Compile Include="Register.fs" />
     <Compile Include="Memory.fs" />
     <Compile Include="Opcodes.fs" />
-    <Compile Include="ALU.fs" />
     <Compile Include="Fetch.fs" />
-    <Compile Include="Instruction.fs" />
+    <Compile Include="Instruction/Utility.fs" />
+    <Compile Include="Instruction/Arithmetic.fs" />
+    <Compile Include="Instruction/Instruction.fs" />
     <Compile Include="Processor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
@@ -19,6 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Fable.Browser.Dom" Version="2.17.0" />
     <PackageReference Include="Fable.Core" Version="4.3.0" />
+    <PackageReference Include="Fable.JsonProvider" Version="1.1.1" />
   </ItemGroup>
 
 </Project>
