@@ -41,6 +41,18 @@ type Instruction =
     | SCF
     | RET
     | JP
+    | DI
+    | RST
+    | ILLEGAL
+    | RETI
+    | EI
+    | RRC
+    | RR
+    | SLA
+    | SRA
+    | SRL
+    | BIT
+
 
 
 type Operand = 
@@ -72,6 +84,7 @@ type Operand =
     | Zero 
     | NotCarry 
     | Carry
+    | Bit of int
 
 type OperandParse =
     {
@@ -141,7 +154,7 @@ let getFirstOperandPrefix hex opcodes : string = jsNative
 let getSecondOperandPrefix hex opcodes : string = jsNative
 
 [<Emit("$0[\"name\"]")>]
-let getOperandName operand : string  = jsNative
+let getOperandName operand : string option  = jsNative
 [<Emit("$0[\"immediate\"]")>]
 let getOperandImmediate operand : bool = jsNative
 [<Emit("$0[\"increment\"]")>]
@@ -150,46 +163,63 @@ let getOperandIncrement operand : bool option = jsNative
 let getOperandDecrement operand : bool option = jsNative
 
 
-let parseOpJson o ins : Operand option = 
-    let name = getOperandName o
+let parseOpJson o ins hex : Operand option = 
+    printfn "%A %A" ins hex
+    let n = getOperandName o
     let d = getOperandDecrement o
     let i = getOperandIncrement o
-    match name,i,d with
-    | "A",_,_ -> A |> Some
-    | "B",_,_ -> B |> Some
-    | "C",_,_ -> C |> Some
-    | "D",_,_ -> D |> Some
-    | "E",_,_ -> E |> Some
-    | "F",_,_ -> F |> Some
-    | "H",_,_ -> H |> Some
-    | "L",_,_ -> L |> Some
-    | "SP",_,_ -> SP |> Some
-    | "n8",_,_ -> N8 |> Some
-    | "n16",_,_ -> N16 |> Some
-    | "a16",_,_-> A16 |> Some
-    | "a8",_,_ -> A8 |> Some
-    | "e8",_,_ -> E8 |> Some
-    | "AF",_,_ -> AF |> Some
-    | "BC",_,_ -> BC |> Some
-    | "DE",_,_ -> DE |> Some
-    | "HL",None,None -> HL |> Some
-    | "HL",Some true,_ -> HLI |> Some
-    | "HL",_,Some true -> HLD |> Some
-    | "$00",_,_ -> (Constant (N 0, N 0)) |> Some
-    | "$08",_,_  -> (Constant (N 0, N 8)) |> Some
-    | "$10",_,_ -> (Constant (N 1, N 0)) |> Some
-    | "$18",_,_ -> (Constant (N 1, N 8)) |> Some
-    | "$20",_,_ -> (Constant (N 2, N 0)) |> Some
-    | "$28",_,_ -> (Constant (N 2, N 8)) |> Some
-    | "$30",_,_ -> (Constant (N 3, N 0)) |> Some
-    | "$38",_,_ -> (Constant (N 3, N 8)) |> Some
-    | "NZ",_,_ -> NotZero |> Some
-    | "Z",_,_ -> Zero |> Some
-    | "NC",_,_ -> NotCarry |> Some
-    | _ ->
-        eprintfn "Error. Operand %A not found" name
-        eprintfn "Instruction %A" ins
-        None
+    match n with
+    | None ->   
+        eprintfn "Operand %A not found! Instruction: %A" n ins
+        None 
+    | Some name ->
+        match name,i,d with
+        | "A",_,_ -> A |> Some
+        | "B",_,_ -> B |> Some
+        | "C",_,_ ->
+            match ins with
+            | CALL | JR | RET -> Carry |> Some
+            | _ -> C |> Some
+        | "D",_,_ -> D |> Some
+        | "E",_,_ -> E |> Some
+        | "F",_,_ -> F |> Some
+        | "H",_,_ -> H |> Some
+        | "L",_,_ -> L |> Some
+        | "SP",_,_ -> SP |> Some
+        | "n8",_,_ -> N8 |> Some
+        | "n16",_,_ -> N16 |> Some
+        | "a16",_,_-> A16 |> Some
+        | "a8",_,_ -> A8 |> Some
+        | "e8",_,_ -> E8 |> Some
+        | "AF",_,_ -> AF |> Some
+        | "BC",_,_ -> BC |> Some
+        | "DE",_,_ -> DE |> Some
+        | "HL",None,None -> HL |> Some
+        | "HL",Some true,_ -> HLI |> Some
+        | "HL",_,Some true -> HLD |> Some
+        | "$00",_,_ -> (Constant (N 0, N 0)) |> Some
+        | "$08",_,_  -> (Constant (N 0, N 8)) |> Some
+        | "$10",_,_ -> (Constant (N 1, N 0)) |> Some
+        | "$18",_,_ -> (Constant (N 1, N 8)) |> Some
+        | "$20",_,_ -> (Constant (N 2, N 0)) |> Some
+        | "$28",_,_ -> (Constant (N 2, N 8)) |> Some
+        | "$30",_,_ -> (Constant (N 3, N 0)) |> Some
+        | "$38",_,_ -> (Constant (N 3, N 8)) |> Some
+        | "NZ",_,_ -> NotZero |> Some
+        | "Z",_,_ -> Zero |> Some
+        | "NC",_,_ -> NotCarry |> Some
+        | "0",_,_ -> (Bit 0) |> Some
+        | "1",_,_ -> (Bit 1) |> Some
+        | "2",_,_ -> (Bit 2) |> Some
+        | "3",_,_ -> (Bit 3) |> Some
+        | "4",_,_ -> (Bit 4) |> Some
+        | "5",_,_ -> (Bit 5) |> Some
+        | "6",_,_ -> (Bit 6) |> Some
+        | "7",_,_ -> (Bit 7) |> Some
+        | _ ->
+            eprintfn "Error. Operand %A not found" name
+            eprintfn "Instruction %A" ins
+            None
 
 
 let addPointer o parse : Operand option = 
@@ -200,8 +230,8 @@ let addPointer o parse : Operand option =
     | true, op -> op
     | _ -> None
 
-let parseOperand  ins (o : string) =
-    parseOpJson o ins |> addPointer o
+let parseOperand hex ins (o : string) =
+    parseOpJson o ins hex |> addPointer o
 
 let stringToInstruction s =
     match s with
@@ -231,22 +261,61 @@ let stringToInstruction s =
     | "RET" -> RET |> Some
     | "POP" -> POP |> Some
     | "JP" -> JP |> Some
+    | "CALL" -> CALL |> Some
+    | "PUSH" -> PUSH |> Some
+    | "RST" -> RST |> Some
+    | "PREFIX" -> PREFIX |> Some
+    | "ILLEGAL_D3" -> ILLEGAL |> Some
+    | "ILLEGAL_DB" -> ILLEGAL |> Some
+    | "ILLEGAL_DD" -> ILLEGAL |> Some
+    | "ILLEGAL_E3" -> ILLEGAL |> Some
+    | "ILLEGAL_E4" -> ILLEGAL |> Some
+    | "ILLEGAL_EB" -> ILLEGAL |> Some
+    | "ILLEGAL_EC" -> ILLEGAL |> Some
+    | "ILLEGAL_ED" -> ILLEGAL |> Some
+    | "ILLEGAL_F4" -> ILLEGAL |> Some
+    | "ILLEGAL_FC" -> ILLEGAL |> Some
+    | "ILLEGAL_FD" -> ILLEGAL |> Some
+    | "LDH" -> LDH |> Some
+    | "RETI" -> RETI |> Some
+    | "DI" -> DI |> Some
+    | "EI" -> EI |> Some
+    | "RLC" -> RLC |> Some
+    | "RRC" -> RRC |> Some
+    | "RL" -> RL |> Some
+    | "RR" -> RR |> Some
+    | "SLA" -> SLA |> Some
+    | "SRA" -> SRA |> Some
+    | "SWAP" -> SWAP |> Some
+    | "SRL" -> SRL |> Some
+    | "BIT" -> BIT |> Some
+    | "RES" -> RES |> Some
+    | "SET" -> SET |> Some
     | _ ->
         eprintfn "Failed to parse string instruction: %A" s
         None
 
-let jsonTo2operands (hex : string) opcodes ins =
+let jsonTo2operands (hex : string) opcodes ins prefix =
     let operands  =
-        getFirstOperand hex opcodes |> parseOperand ins,
-        getSecondOperand hex opcodes |> parseOperand ins
+        match prefix with
+        | false ->
+            getFirstOperand hex opcodes |> parseOperand hex ins,
+            getSecondOperand hex opcodes |> parseOperand hex ins
+        | _ ->
+            getFirstOperandPrefix hex opcodes |> parseOperand hex ins,
+            getSecondOperandPrefix hex opcodes |> parseOperand hex ins
+
     match operands with
     | (Some n1,Some n2) -> opRecord2operands ins n1 n2
     | _ ->
         eprintfn "Failed to parse operands %A" hex
         None
 
-let jsonTo1operand (hex : string) opcodes ins =
-    let operand  = getFirstOperand hex opcodes |> parseOperand ins
+let jsonTo1operand (hex : string) opcodes ins prefix =
+    let operand  =
+        match prefix with
+        | false -> getFirstOperand hex opcodes |> parseOperand hex ins
+        | _ -> getFirstOperandPrefix hex opcodes |> parseOperand hex ins
     match operand with
     | Some o1 -> opRecord1operand ins o1
     | _ ->
@@ -257,33 +326,57 @@ let handleJr hex nr i =
     //JR can have one or two operands
     match (byteToInt hex) with
     | n when (n = 0x18) ->
-        jsonTo1operand nr opcodes i
+        jsonTo1operand nr opcodes i false
     | _ -> 
-        jsonTo2operands nr opcodes i
+        jsonTo2operands nr opcodes i false
+
+let handleCall hex nr i = 
+    //JR can have one or two operands
+    match (byteToInt hex) with
+    | n when (n = 0xCD) ->
+        jsonTo1operand nr opcodes i false
+    | _ -> 
+        jsonTo2operands nr opcodes i false
+
+let handleJp hex nr i = 
+    //JR can have one or two operands
+    match (byteToInt hex) with
+    | n when (n = 0xC3) ->
+        jsonTo1operand nr opcodes i false
+    | n when (n = 0xE9) ->
+        jsonTo1operand nr opcodes i false
+    | _ -> 
+        jsonTo2operands nr opcodes i false
 
 let handleRet hex nr i = 
     //JR can have one or two operands
     match (byteToInt hex) with
     | n when (n = 0xC9) ->
-        jsonTo1operand nr opcodes i
-    | _ -> 
         opRecordNooperand i
+    | _ -> 
+        jsonTo1operand nr opcodes i false
 
-let jsonToRecord hex  =  
+let jsonToRecord hex isPrefix  =  
     let nr = hex |> toHexString
-    let instruction = getMnemonic nr opcodes |> stringToInstruction
+    let instruction =
+        match isPrefix with
+        | true -> getMnemonic nr opcodes |> stringToInstruction
+        | _ -> getMnemonicPrefixed nr opcodes |> stringToInstruction
     match instruction with
     | Some i ->
         match i with
         | ADD | SUB | SBC | ADC | CP | OR | XOR | AND  | LD | LDH ->
-            jsonTo2operands nr opcodes i
-        | INC | DEC | POP | PUSH | STOP | RL | RLC ->
-            jsonTo1operand nr opcodes i
-        | NOP | CPL | CCF | HALT | RLCA | RRCA | RRA | SCF | DAA | RLA ->
-            opRecordNooperand i 
+            jsonTo2operands nr opcodes i false
+        | BIT | RES | SET ->
+            jsonTo2operands nr opcodes i true
+        | INC | DEC | POP | RST | PUSH | STOP  ->
+            jsonTo1operand nr opcodes i false
+        | RLC | RL | RR | SLA | SWAP | SRL | SRA | RRC ->
+            jsonTo1operand nr opcodes i true
+        | NOP | CPL | CCF | RETI | PREFIX | DI | EI | ILLEGAL | HALT | RLCA
+        | RRCA | RRA | SCF | DAA | RLA -> opRecordNooperand i 
         | JR -> handleJr hex nr i
         | RET -> handleRet hex nr i
-        | _ ->
-            eprintfn "Missing instruction: %A" instruction
-            None
+        | JP -> handleJp hex nr i
+        | CALL -> handleCall hex nr i
     | _ -> None

@@ -18,39 +18,28 @@ let c = toHexString (N 3,N 2)
 
 
 
-//READ THIS
 
-
-
-//WHAT HAPPENED LAST TIME?
-
-
-//* MANAGED TO FIGURE OUT LESS STUPID WAY TO GET OPCODES
-
-//* CHANGED TO 4 BIT IMPLEMENTATION. ARITHMETIC NEEDS TO BE TESTED, BUT SHOULD WORK
-
-//* FOUND THE ERROR IN THE OPCODES. FORGOT ["operands"] SO ITS OK. NEEDS A LITTLE FIXING
-
-
-let testJsonRecords () =
-    let iter = 0xFFFF
+let testJsonRecordsUnprefixed prefix =
+    let iter = 0xFF
     let init = 0
-    let rec testRecords i =
+    let rec testRecords i  =
         let b = intToByte i
         match b,i with
-        | Some d,_ ->
-            match jsonToRecord d with
+        | Some d, j when (j <= iter) ->
+            match jsonToRecord d prefix  with
             | Some r ->
                 printfn "Recieved result %A" r
-                testRecords (i + 1)
+                testRecords (i + 1) 
             | _ ->
                 eprintfn "Failed at code %A" i
-        | _,j when (j = iter) -> printfn "Finished"
+        | _,j when (j >= iter) -> printfn "Finished"
         | _ -> eprintfn "Failed to parse byte"
-    testRecords init
+    testRecords init 
+    testRecords init 
 
+testJsonRecordsUnprefixed true
+testJsonRecordsUnprefixed false
 
-testJsonRecords()
 
 let div = document.createElement "div"
 div.innerHTML <- "hello"
